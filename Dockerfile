@@ -11,6 +11,8 @@ COPY . .
 
 RUN ls -la
 
+RUN pwd
+
 ##########################
 # Build the final image.
 ##########################

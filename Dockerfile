@@ -38,4 +38,6 @@ USER root
 
 EXPOSE 6666
 
+RUN ls -la
+
 ENTRYPOINT ["/xmidt-agent"]

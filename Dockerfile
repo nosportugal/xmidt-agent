@@ -9,6 +9,8 @@ RUN apk add --no-cache --no-progress ca-certificates
 
 COPY . .
 
+RUN ls
+
 ##########################
 # Build the final image.
 ##########################

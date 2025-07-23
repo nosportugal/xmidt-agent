@@ -266,8 +266,10 @@ type mockTr181Out struct {
 
 func provideMockTr181Handler(in mockTr181In) (mockTr181Out, error) {
 	if !in.MockTr181.Enabled {
+		in.Logger.Warn("MockTR181 handler is disabled")
 		return mockTr181Out{}, nil
 	}
+	in.Logger.Info("MockTR181 handler is enabled")
 
 	loggerOut, err := loghandler.New(in.PubSub,
 		in.Logger.With(

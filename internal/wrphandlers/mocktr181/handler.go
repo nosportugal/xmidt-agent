@@ -33,6 +33,15 @@ const (
 	appsBasePath     = "Device.X_NOS_COM_APPS."
 	numberOfAppsPath = appsBasePath + "NumberOfApps"
 
+	// TR-181 commands
+	cmdGet           = "GET"
+	cmdSet           = "SET"
+	cmdGetAttributes = "GET_ATTRIBUTES"
+	cmdSetAttributes = "SET_ATTRIBUTES"
+	cmdReplaceRows   = "REPLACE_ROWS"
+	cmdDeleteRow     = "DELETE_ROW"
+	cmdAddRow        = "ADD_ROW"
+
 	// Common error messages
 	msgPackageNotFound       = "Package not found"
 	msgNoPackagesSpecified   = "No packages specified"
@@ -195,19 +204,19 @@ func (h *Handler) proccessCommand(wrpPayload []byte) (int64, []byte, error) {
 	}
 
 	switch payload.Command {
-	case "GET":
+	case cmdGet:
 		return h.get(payload)
-	case "SET":
+	case cmdSet:
 		return h.set(payload)
-	case "GET_ATTRIBUTES":
+	case cmdGetAttributes:
 		return h.getAttributes(payload)
-	case "SET_ATTRIBUTES":
+	case cmdSetAttributes:
 		return h.setAttributes(payload)
-	case "REPLACE_ROWS":
+	case cmdReplaceRows:
 		return h.updateTableRow(payload)
-	case "DELETE_ROW":
+	case cmdDeleteRow:
 		return h.deleteTableRow(payload)
-	case "ADD_ROW":
+	case cmdAddRow:
 		return h.createTableRow(payload)
 	default:
 		return statusCode, []byte(fmt.Sprintf(`{"message": "command '%s' is not supported", "statusCode": %d}`, payload.Command, statusCode)), nil

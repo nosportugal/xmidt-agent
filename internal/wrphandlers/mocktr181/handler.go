@@ -517,7 +517,7 @@ func (h *Handler) deleteTableRow(tr181 *Tr181Payload) (int64, []byte, error) {
 
 	rowPath, ok := tr181.Row.(string)
 	if !ok || rowPath == "" {
-		result.StatusCode = 520
+		result.StatusCode = statusTR181Error
 		result.Parameters = []Parameter{{
 			Message: "Row field is required for DELETE_ROW operation and must be a string",
 		}}

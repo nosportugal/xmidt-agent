@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"strconv"
@@ -436,9 +437,7 @@ func (h *Handler) setAttributes(tr181 *Tr181Payload) (int64, []byte, error) {
 			continue
 		}
 
-		for attrName, attrValue := range param.Attributes {
-			foundParam.Attributes[attrName] = attrValue
-		}
+		maps.Copy(foundParam.Attributes, param.Attributes)
 
 		result.Parameters = append(result.Parameters, Parameter{
 			Name:       foundParam.Name,

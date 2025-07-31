@@ -449,8 +449,8 @@ func (h *Handler) setAttributes(tr181 *Tr181Payload) (int64, []byte, error) {
 
 	payload, err := json.Marshal(result)
 	if err != nil {
-		return http.StatusInternalServerError, payload,
-			errors.Join(ErrInvalidResponsePayload, err)
+		return http.StatusInternalServerError, payload, errors.Join(
+			ErrInvalidResponsePayload, err)
 	}
 	return int64(result.StatusCode), payload, nil
 }

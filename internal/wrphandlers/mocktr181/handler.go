@@ -208,7 +208,6 @@ func (h *Handler) proccessCommand(wrpPayload []byte) (int64, []byte, error) {
 	case "ADD_ROW":
 		return h.createTableRow(payload)
 	default:
-		// currently only get and set are implemented for existing mocktr181
 		return statusCode, []byte(fmt.Sprintf(`{"message": "command '%s' is not supported", "statusCode": %d}`, payload.Command, statusCode)), nil
 	}
 }
@@ -302,12 +301,10 @@ func (h *Handler) getAttributes(tr181 *Tr181Payload) (int64, []byte, error) {
 				if success {
 					readableParams = append(readableParams, param)
 				} else if paramFailure {
-					// Parameter has no attributes - add as parameter failure
 					failedNames = append(failedNames, mockParameter.Name)
 				} else if attrFailure {
-					// Invalid attribute - add as attribute failure
 					failedNames = append(failedNames, fmt.Sprintf("%s:%s", mockParameter.Name, invalidAttr))
-					break // Stop processing this parameter on first invalid attribute
+					break
 				}
 			} else if !shouldSkip {
 				failedNames = append(failedNames, mockParameter.Name)
@@ -317,7 +314,6 @@ func (h *Handler) getAttributes(tr181 *Tr181Payload) (int64, []byte, error) {
 
 	result.Parameters = readableParams
 	if len(failedNames) != 0 {
-		// Check if we have attribute errors (contain ":")
 		hasAttributeErrors := false
 		for _, name := range failedNames {
 			if strings.Contains(name, ":") {
@@ -410,7 +406,6 @@ func (h *Handler) setAttributes(tr181 *Tr181Payload) (int64, []byte, error) {
 	}
 	anyFailure := false
 
-	// Handle SET_ATTRIBUTES - attributes are in Parameters with parameter names
 	for _, param := range tr181.Parameters {
 		foundParam, errorParam, shouldContinue := h.findWritableParameter(param.Name)
 		if !shouldContinue {
@@ -420,7 +415,6 @@ func (h *Handler) setAttributes(tr181 *Tr181Payload) (int64, []byte, error) {
 			continue
 		}
 
-		// Check if parameter supports attributes
 		if foundParam.Attributes == nil {
 			result.Parameters = append(result.Parameters, Parameter{
 				Name:    foundParam.Name,
@@ -431,7 +425,6 @@ func (h *Handler) setAttributes(tr181 *Tr181Payload) (int64, []byte, error) {
 			continue
 		}
 
-		// Merge new attributes with existing ones
 		for attrName, attrValue := range param.Attributes {
 			foundParam.Attributes[attrName] = attrValue
 		}
@@ -482,9 +475,7 @@ func (h *Handler) updateTableRow(tr181 *Tr181Payload) (int64, []byte, error) {
 	anyFailure := false
 	var resultParams []Parameter
 
-	// Process each row in the table
 	for rowIndex, rowData := range tr181.Rows {
-		// Process each parameter in the row
 		for paramName, value := range rowData {
 			param, success := h.updateSingleRowParameter(tr181.Table, rowIndex, paramName, value)
 			resultParams = append(resultParams, param)
@@ -565,7 +556,6 @@ func (h *Handler) createTableRow(tr181 *Tr181Payload) (int64, []byte, error) {
 		return int64(result.StatusCode), payload, nil
 	}
 
-	// Ensure table name ends with a dot
 	if !strings.HasSuffix(tableName, ".") {
 		tableName += "."
 	}
@@ -624,7 +614,6 @@ func (h *Handler) loadFile() ([]MockParameter, error) {
 }
 
 func (h *Handler) handleUninstallApps(param Parameter) ([]Parameter, int) {
-	// Gather package names from the param value
 	var pkgs []string
 	switch v := param.Value.(type) {
 	case []interface{}:
@@ -744,7 +733,6 @@ func (h *Handler) handleClearCache(param Parameter) ([]Parameter, int) {
 		}}, 520
 	}
 
-	// If the first package isn't installed, return a single "not found" failure
 	first := pkgs[0]
 	indexSet := h.getIndexesForPackage(first)
 	if len(indexSet) == 0 {
@@ -755,7 +743,6 @@ func (h *Handler) handleClearCache(param Parameter) ([]Parameter, int) {
 		}}, 520
 	}
 
-	// Otherwise clear cache for each package and collect the results
 	var result []Parameter
 	for _, pkg := range pkgs {
 		result = append(result, h.clearCacheByPackage(pkg)...)
@@ -843,7 +830,6 @@ func (h *Handler) uninstallAppByPackage(pkg string) []Parameter {
 		}}
 	}
 
-	// Build prefixes for all app indexes to delete
 	var prefixes []string
 	for idx := range indexSet {
 		prefixes = append(prefixes, appsBasePath+idx+".")
@@ -855,7 +841,6 @@ func (h *Handler) uninstallAppByPackage(pkg string) []Parameter {
 }
 
 func (h *Handler) installAppByPackage(app InstallApp) []Parameter {
-	// Find the next available index
 	maxIdx := 0
 	for _, mp := range h.parameters {
 		if strings.HasPrefix(mp.Name, appsBasePath) {
@@ -872,7 +857,6 @@ func (h *Handler) installAppByPackage(app InstallApp) []Parameter {
 	newIdx := maxIdx + 1
 	idxStr := fmt.Sprintf("%d", newIdx)
 
-	// Create new parameters for the app
 	params := []MockParameter{
 		{
 			Name:   appsBasePath + idxStr + ".Package",
@@ -901,13 +885,10 @@ func (h *Handler) installAppByPackage(app InstallApp) []Parameter {
 		},
 	}
 
-	// Add to handler's parameters
 	h.parameters = append(h.parameters, params...)
 
-	// Update NumberOfApps
 	h.updateNumberOfApps(1)
 
-	// Return as []Parameter for response
 	result := make([]Parameter, len(params))
 	for i, mp := range params {
 		result[i] = Parameter{
@@ -940,18 +921,17 @@ func (h *Handler) updateNumberOfApps(delta int) {
 			if n < 0 {
 				n = 0
 			}
-			h.parameters[i].Value = n // always store as int
+			h.parameters[i].Value = n
 			return
 		}
 	}
-	// If not found, add it as int
 	val := delta
 	if val < 0 {
 		val = 0
 	}
 	h.parameters = append(h.parameters, MockParameter{
 		Name:   numberOfAppsPath,
-		Value:  val, // always int
+		Value:  val,
 		Access: "r",
 	})
 }
@@ -1001,7 +981,6 @@ func (h *Handler) deleteParametersByPrefix(prefixes []string) []Parameter {
 func (h *Handler) clearCacheByPackage(pkg string) []Parameter {
 	indexSet := h.getIndexesForPackage(pkg)
 
-	// If somehow not found here, return a failure entry
 	if len(indexSet) == 0 {
 		return []Parameter{{
 			Name:    pkg,
@@ -1041,7 +1020,7 @@ func (h *Handler) clearDataByPackage(pkg string) []Parameter {
 		dataParamName := appsBasePath + idx + ".Data"
 		for i := range h.parameters {
 			if h.parameters[i].Name == dataParamName {
-				h.parameters[i].Value = "" // Clear the data
+				h.parameters[i].Value = ""
 				cleared = append(cleared, Parameter{
 					Name:    dataParamName,
 					Message: "Data cleared",
@@ -1053,7 +1032,6 @@ func (h *Handler) clearDataByPackage(pkg string) []Parameter {
 	return cleared
 }
 
-// findMatchingParameters finds all parameters that match the given name pattern
 func (h *Handler) findMatchingParameters(name string) ([]*MockParameter, bool) {
 	var matches []*MockParameter
 	found := false
@@ -1075,22 +1053,18 @@ func (h *Handler) findMatchingParameters(name string) ([]*MockParameter, bool) {
 	return matches, found
 }
 
-// isParameterReadable checks if a parameter is readable and handles wildcard logic
 func (h *Handler) isParameterReadable(param *MockParameter, requestName string) (readable bool, shouldSkip bool) {
 	if strings.Contains(param.Access, "r") {
 		return true, false
 	}
 
-	// If the requested parameter is a wild card and is not readable,
-	// then continue and don't count it as a failure.
 	if len(requestName) > 0 && requestName[len(requestName)-1] == '.' {
-		return false, true // not readable, but skip (don't count as failure)
+		return false, true
 	}
 
-	return false, false // not readable, count as failure
+	return false, false
 }
 
-// buildErrorResponse creates a standardized error response
 func (h *Handler) buildErrorResponse(command string, names []string, failedNames []string, hasAttributeErrors bool) Tr181Payload {
 	result := Tr181Payload{
 		Command:    command,
@@ -1112,16 +1086,11 @@ func (h *Handler) buildErrorResponse(command string, names []string, failedNames
 	return result
 }
 
-// findWritableParameter finds a parameter by name and validates it's writable
-// Returns: (foundParameter, errorParameter, shouldContinue)
-// If errorParameter is not nil, the caller should add it to results and continue
 func (h *Handler) findWritableParameter(paramName string) (*MockParameter, *Parameter, bool) {
-	// Find the parameter
 	for i := range h.parameters {
 		if h.parameters[i].Name == paramName {
 			param := &h.parameters[i]
 
-			// Check if it's writable
 			if !strings.Contains(param.Access, "w") {
 				return nil, &Parameter{
 					Name:    param.Name,
@@ -1133,14 +1102,12 @@ func (h *Handler) findWritableParameter(paramName string) (*MockParameter, *Para
 		}
 	}
 
-	// Parameter not found
 	return nil, &Parameter{
 		Name:    paramName,
 		Message: msgInvalidParameterName,
 	}, false
 }
 
-// marshalResponse marshals the result and handles errors consistently
 func (h *Handler) marshalResponse(result Tr181Payload) (int64, []byte, error) {
 	payload, err := json.Marshal(result)
 	if err != nil {
@@ -1149,7 +1116,6 @@ func (h *Handler) marshalResponse(result Tr181Payload) (int64, []byte, error) {
 	return int64(result.StatusCode), payload, nil
 }
 
-// parseAttributes converts the attributes interface{} to []string
 func (h *Handler) parseAttributes(attributes interface{}) ([]string, error) {
 	var result []string
 
@@ -1168,7 +1134,6 @@ func (h *Handler) parseAttributes(attributes interface{}) ([]string, error) {
 		result = v
 	case string:
 		if v != "" {
-			// Split comma-separated attributes
 			for _, attr := range strings.Split(v, ",") {
 				attr = strings.TrimSpace(attr)
 				if attr != "" {
@@ -1187,22 +1152,17 @@ func (h *Handler) parseAttributes(attributes interface{}) ([]string, error) {
 	return result, nil
 }
 
-// processParameterForAttributes processes a single parameter for GET_ATTRIBUTES command
-// Returns: (Parameter, success, parameterFailure, attributeFailure, invalidAttributeName)
 func (h *Handler) processParameterForAttributes(param *MockParameter, attributes []string) (Parameter, bool, bool, bool, string) {
-	// Check if parameter has any attributes
 	if param.Attributes == nil {
-		return Parameter{}, false, true, false, "" // no attributes, this is a parameter failure
+		return Parameter{}, false, true, false, ""
 	}
 
-	// Check if all requested attributes exist
 	for _, attrName := range attributes {
 		if _, exists := param.Attributes[attrName]; !exists {
-			return Parameter{}, false, false, true, attrName // invalid attribute found, this is an attribute failure
+			return Parameter{}, false, false, true, attrName
 		}
 	}
 
-	// All attributes are valid, build response with only requested attributes
 	requestedAttrs := make(map[string]interface{})
 	for _, attrName := range attributes {
 		requestedAttrs[attrName] = param.Attributes[attrName]
@@ -1213,11 +1173,9 @@ func (h *Handler) processParameterForAttributes(param *MockParameter, attributes
 		Attributes: requestedAttrs,
 		Message:    "Success",
 		Count:      len(requestedAttrs),
-	}, true, false, false, "" // success, no failures
+	}, true, false, false, ""
 }
 
-// parseIndexFromParameterName extracts numeric index from a parameter name like "Device.Apps.1.Name"
-// Returns -1 if no valid index is found
 func parseIndexFromParameterName(paramName, basePath string) int {
 	if !strings.HasPrefix(paramName, basePath) {
 		return -1
@@ -1235,12 +1193,9 @@ func parseIndexFromParameterName(paramName, basePath string) int {
 	return -1
 }
 
-// updateSingleRowParameter updates a single parameter in a table row
-// Returns (Parameter, success) where success indicates if the update was successful
 func (h *Handler) updateSingleRowParameter(tableName, rowIndex, paramName string, value interface{}) (Parameter, bool) {
 	fullParamName := fmt.Sprintf("%s%s.%s", tableName, rowIndex, paramName)
 
-	// Find the parameter in our mock parameters
 	for i := range h.parameters {
 		p := &h.parameters[i]
 		if p.Name == fullParamName {
@@ -1250,7 +1205,6 @@ func (h *Handler) updateSingleRowParameter(tableName, rowIndex, paramName string
 					Message: msgParameterNotWritable,
 				}, false
 			}
-			// Update the parameter
 			p.Value = value
 			return Parameter{
 				Name:    p.Name,
@@ -1260,15 +1214,12 @@ func (h *Handler) updateSingleRowParameter(tableName, rowIndex, paramName string
 		}
 	}
 
-	// Parameter not found
 	return Parameter{
 		Name:    fullParamName,
 		Message: msgInvalidParameterName,
 	}, false
 }
 
-// validateTableRowInput validates the input for ADD_ROW operation
-// Returns (tableName, rowParams, error)
 func validateTableRowInput(tr181 *Tr181Payload) (string, []Parameter, error) {
 	tableName := tr181.Table
 	if tableName == "" {
@@ -1303,7 +1254,6 @@ func validateTableRowInput(tr181 *Tr181Payload) (string, []Parameter, error) {
 	return tableName, rowParams, nil
 }
 
-// findNextTableIndex finds the next available index for a table
 func (h *Handler) findNextTableIndex(tableName string) int {
 	maxIndex := -1
 	for _, param := range h.parameters {

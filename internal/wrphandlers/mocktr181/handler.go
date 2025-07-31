@@ -34,10 +34,12 @@ const (
 	numberOfAppsPath = appsBasePath + "NumberOfApps"
 
 	// Common error messages
-	msgPackageNotFound      = "Package not found"
-	msgNoPackagesSpecified  = "No packages specified"
-	msgInvalidParameterName = "Invalid parameter name"
-	msgParameterNotWritable = "Parameter is not writable"
+	msgPackageNotFound       = "Package not found"
+	msgNoPackagesSpecified   = "No packages specified"
+	msgInvalidParameterName  = "Invalid parameter name"
+	msgParameterNotWritable  = "Parameter is not writable"
+	msgInvalidValueType      = "not a string or string array"
+	msgNoAttributesSpecified = "no attributes specified for GET_ATTRIBUTES command"
 
 	// Common success messages
 	msgSuccess = "Success"
@@ -632,7 +634,7 @@ func (h *Handler) handleUninstallApps(param Parameter) ([]Parameter, int) {
 		return []Parameter{{
 			Name:    param.Name,
 			Value:   param.Value,
-			Message: "Invalid UninstallApps value: not a string or string array",
+			Message: msgInvalidValueType,
 		}}, 520
 	}
 	if len(pkgs) == 0 {
@@ -722,7 +724,7 @@ func (h *Handler) handleClearCache(param Parameter) ([]Parameter, int) {
 		return []Parameter{{
 			Name:    param.Name,
 			Value:   param.Value,
-			Message: "Invalid ClearCache value: not a string or string array",
+			Message: msgInvalidValueType,
 		}}, 520
 	}
 	if len(pkgs) == 0 {
@@ -769,7 +771,7 @@ func (h *Handler) handleClearData(param Parameter) ([]Parameter, int) {
 		return []Parameter{{
 			Name:    param.Name,
 			Value:   param.Value,
-			Message: "Invalid ClearData value: not a string or string array",
+			Message: msgInvalidValueType,
 		}}, 520
 	}
 	if len(pkgs) == 0 {
@@ -1120,7 +1122,7 @@ func (h *Handler) parseAttributes(attributes interface{}) ([]string, error) {
 	var result []string
 
 	if attributes == nil {
-		return nil, fmt.Errorf("no attributes specified for GET_ATTRIBUTES command")
+		return nil, fmt.Errorf(msgNoAttributesSpecified)
 	}
 
 	switch v := attributes.(type) {
@@ -1146,7 +1148,7 @@ func (h *Handler) parseAttributes(attributes interface{}) ([]string, error) {
 	}
 
 	if len(result) == 0 {
-		return nil, fmt.Errorf("no attributes specified for GET_ATTRIBUTES command")
+		return nil, fmt.Errorf(msgNoAttributesSpecified)
 	}
 
 	return result, nil
@@ -1171,7 +1173,7 @@ func (h *Handler) processParameterForAttributes(param *MockParameter, attributes
 	return Parameter{
 		Name:       param.Name,
 		Attributes: requestedAttrs,
-		Message:    "Success",
+		Message:    msgSuccess,
 		Count:      len(requestedAttrs),
 	}, true, false, false, ""
 }

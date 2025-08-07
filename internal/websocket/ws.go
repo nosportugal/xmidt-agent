@@ -374,6 +374,11 @@ func (ws *Websocket) run(ctx context.Context) {
 					break
 				}
 
+				// Signal activity for successful message reception
+				if len(activity) == 0 {
+					activity <- struct{}{}
+				}
+
 				ws.msgListeners.Visit(func(l event.MsgListener) {
 					l.OnMessage(msg)
 				})

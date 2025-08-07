@@ -68,7 +68,7 @@ websocket:
   max_message_bytes: 262144 # 256 * 1024
   retry_policy:
     interval: 5s
-    multiplier: 1.5    
+    multiplier: 1.5
     jitter: .2         
     max_interval: 60s
 quic:

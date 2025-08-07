@@ -53,7 +53,7 @@ websocket:
   back_up_url:        "http://localhost:8080"
   fetch_url_timeout:  30s
   inactivity_timeout:      30s
-  ping_write_timeout:       10s 
+  ping_write_timeout:       10s
   send_timeout:       90s
   keep_alive_interval: 15s  
   disable_v6: true  

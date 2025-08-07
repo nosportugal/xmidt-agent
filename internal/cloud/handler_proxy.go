@@ -157,8 +157,8 @@ func (p *Proxy) OnWebsocketConnect(e event.Connect) {
 	// should we switch to quic?
 	if e.Err != nil && e.TriesSinceLastConnect > p.maxTries {
 		// Check if QUIC is enabled before switching
-		if quicClient, ok := p.qc.(interface{ IsEnabled() bool }); ok {
-			if !quicClient.IsEnabled() {
+		if quicEnabledChecker, ok := p.qc.(EnabledChecker); ok {
+			if !quicEnabledChecker.IsEnabled() {
 				// QUIC is disabled, don't switch - just keep retrying WebSocket
 				return
 			}

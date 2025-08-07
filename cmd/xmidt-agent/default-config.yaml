@@ -55,7 +55,7 @@ websocket:
   inactivity_timeout:      30s
   ping_write_timeout:       10s
   send_timeout:       90s
-  keep_alive_interval: 15s  
+  keep_alive_interval: 15s
   disable_v6: true  
   http_client:
     timeout: 30s

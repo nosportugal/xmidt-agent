@@ -69,7 +69,7 @@ websocket:
   retry_policy:
     interval: 5s
     multiplier: 1.5
-    jitter: .2         
+    jitter: .2
     max_interval: 60s
 quic:
   disable: true # Disable QUIC completely to prevent switching back to failed protocol

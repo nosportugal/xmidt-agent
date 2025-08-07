@@ -115,7 +115,7 @@ quic:
     jitter: .33333333 #1.0 / 3.0
     max_interval: 341333ms # 341*time.Second + 333*time.Millisecond
 cloud:
-  prefer_quic: false  # Start with WebSocket instead of QUIC
+  prefer_quic: false # Start with WebSocket instead of QUIC
   # max tries before switching protocols
   max_tries: 2
 lib_parodus:

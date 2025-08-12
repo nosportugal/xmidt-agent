@@ -247,6 +247,13 @@ func (ws *Websocket) run(ctx context.Context) {
 	// ws.wg.Add(1)
 	// defer ws.wg.Done()
 
+	// Ensure ws.shutdown is reset to nil when run exits
+	defer func() {
+		ws.m.Lock()
+		ws.shutdown = nil
+		ws.m.Unlock()
+	}()
+
 	mode := ws.nextMode(event.Ipv4)
 
 	policy := ws.retryPolicyFactory.NewPolicy(ctx)
@@ -372,11 +379,6 @@ func (ws *Websocket) run(ctx context.Context) {
 					})
 
 					break
-				}
-
-				// Signal activity for successful message reception
-				if len(activity) == 0 {
-					activity <- struct{}{}
 				}
 
 				ws.msgListeners.Visit(func(l event.MsgListener) {

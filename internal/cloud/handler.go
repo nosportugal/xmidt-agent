@@ -19,8 +19,3 @@ type Handler interface {
 	AddConnectListener(listener event.ConnectListener) event.CancelFunc
 	Name() string
 }
-
-// EnabledChecker interface allows checking if a handler is enabled
-type EnabledChecker interface {
-	IsEnabled() bool
-}

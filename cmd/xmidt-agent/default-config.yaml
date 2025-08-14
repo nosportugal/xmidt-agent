@@ -52,10 +52,11 @@ websocket:
   # used if xmidt_service section is empty or xmdit_service connection fails
   back_up_url:        "http://localhost:8080"
   fetch_url_timeout:  30s
-  inactivity_timeout:      1m
+  inactivity_timeout:      120s
   ping_write_timeout:       90s
   send_timeout:       90s
   keep_alive_interval: 30s
+  disable_v6: true
   http_client:
     timeout: 30s
     transport:
@@ -108,9 +109,9 @@ quic:
     jitter: .33333333 #1.0 / 3.0
     max_interval: 341333ms # 341*time.Second + 333*time.Millisecond
 cloud:
-  prefer_quic: true
+  prefer_quic: true # Prefer QUIC first, then fall back to WebSocket
   # max tries before switching protocols
-  max_tries: 10
+  max_tries: 2
 lib_parodus:
   parodus_service_url: "tcp://127.0.0.1:6666"
   keep_alive_interval: 30s

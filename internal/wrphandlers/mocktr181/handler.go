@@ -47,6 +47,7 @@ const (
 	msgPackageNotFound       = "Package not found"
 	msgNoPackagesSpecified   = "No packages specified"
 	msgInvalidParameterName  = "Invalid parameter name"
+	msgInvalidAttributeName  = "Invalid attribute name"
 	msgParameterNotWritable  = "Parameter is not writable"
 	msgInvalidValueType      = "not a string or string array"
 	msgNoAttributesSpecified = "no attributes specified for GET_ATTRIBUTES command"
@@ -1052,12 +1053,19 @@ func (h *Handler) findMatchingParameters(name string) ([]*MockParameter, bool) {
 			continue
 		}
 
-		if !strings.HasPrefix(mockParameter.Name, name) {
+		// Check for exact match
+		if mockParameter.Name == name {
+			matches = append(matches, mockParameter)
+			found = true
 			continue
 		}
 
-		matches = append(matches, mockParameter)
-		found = true
+		// Check for hierarchical match (when search term ends with '.')
+		if strings.HasSuffix(name, ".") && strings.HasPrefix(mockParameter.Name, name) {
+			matches = append(matches, mockParameter)
+			found = true
+			continue
+		}
 	}
 
 	return matches, found
@@ -1084,9 +1092,9 @@ func (h *Handler) buildErrorResponse(command string, names []string, failedNames
 
 	var message string
 	if hasAttributeErrors {
-		message = fmt.Sprintf("Invalid attribute names: %s", failedNames)
+		message = msgInvalidAttributeName
 	} else {
-		message = fmt.Sprintf("Invalid parameter names: %s", failedNames)
+		message = msgInvalidParameterName
 	}
 
 	result.Parameters = []Parameter{{
